@@ -1,0 +1,623 @@
+/* TracLine Web Interface CSS - VERSION 3.0 */
+/* Container width: 1600px */
+:root {
+    --color-todo: #666;
+    --color-ready: #ff7675;
+    --color-doing: #00b894;
+    --color-testing: #0984e3;
+    --color-done: #6c757d;
+}
+
+/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background-color: #3498db;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1, h2, h3 {
+    margin: 0;
+    margin-bottom: 15px;
+}
+
+pre {
+    background-color: #f0f0f0;
+    padding: 15px;
+    border-radius: 5px;
+    overflow: auto;
+    max-height: 400px;
+}
+
+/* Project Selector */
+.project-selector {
+    display: flex;
+    align-items: center;
+}
+
+.project-selector label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.project-selector select {
+    padding: 8px;
+    border-radius: 4px;
+    border: none;
+    min-width: 200px;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+.tab-button.active {
+    background-color: #3498db;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-height: 500px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Team View Switcher */
+.view-mode-switcher {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    background: #f5f5f5;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.view-mode-label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.view-mode-btn {
+    background: #e0e0e0;
+    border: none;
+    padding: 5px 10px;
+    margin-right: 5px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.view-mode-btn.active {
+    background: #4CAF50;
+    color: white;
+}
+
+/* Team Hierarchy Views */
+.team-container {
+    padding: 15px;
+}
+
+/* Pyramid View (default) */
+.view-pyramid .direct-reports {
+    margin-left: 30px;
+    border-left: 1px dashed #ccc;
+    padding-left: 10px;
+}
+
+/* List View */
+.view-list {
+    display: block !important;
+    width: 100% !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    overflow: hidden !important;
+}
+
+/* KILL ALL HIERARCHY DIVS */
+.view-list .direct-reports,
+.view-list .sub-teams-level,
+.view-list .pyramid-level,
+.view-list .team-pyramid {
+    display: contents !important;
+    visibility: visible !important; /* Ensure children are visible */
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: none !important;
+}
+
+.view-list .member-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-bottom: 2px !important;
+    
+    /* Basic layout */
+    display: flex !important;
+    align-items: center !important;
+    height: 60px !important;
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
+    
+    /* Appearance */
+    border-bottom: 1px solid #eee !important;
+    border-radius: 0 !important;
+    background: white !important;
+}
+
+/* Tile View */
+.view-tile {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+    gap: 15px !important;
+    width: 100% !important;
+    padding: 10px !important;
+}
+
+/* KILL ALL HIERARCHY DIVS for grid */
+.view-tile .direct-reports,
+.view-tile .pyramid-level,
+.view-tile .sub-teams-level,
+.view-tile .team-pyramid {
+    display: contents !important;
+    position: static !important;
+    visibility: visible !important; /* Important for children! */
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: none !important;
+}
+
+.view-tile .member-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 230px !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    
+    /* Flex layout */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    
+    /* Clean appearance */
+    border-radius: 8px !important;
+    background: white !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+}
+
+@media (max-width: 768px) {
+    .view-tile .member-card {
+        flex: 0 0 calc(50% - 10px);
+        max-width: calc(50% - 10px);
+    }
+}
+
+/* Member Cards */
+.member-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    max-width: 400px;
+}
+
+.member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.member-photo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #3498db;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-right: 15px;
+    overflow: hidden;
+}
+
+.member-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.member-photo.large {
+    width: 100px;
+    height: 100px;
+    font-size: 36px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+}
+
+.member-info {
+    flex: 1;
+}
+
+.member-name {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #3498db;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+.position-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #f39c12;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.position-badge.LEADER {
+    background-color: #e74c3c;
+}
+
+.position-badge.SUB_LEADER {
+    background-color: #d35400;
+}
+
+.todo-count {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #666;
+}
+
+.task-count {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Task Status */
+.task-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+.task-status.todo {
+    background-color: var(--color-todo);
+}
+
+.task-status.ready {
+    background-color: var(--color-ready);
+}
+
+.task-status.doing {
+    background-color: var(--color-doing);
+}
+
+.task-status.testing {
+    background-color: var(--color-testing);
+}
+
+.task-status.done {
+    background-color: var(--color-done);
+}
+
+/* Task List */
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.task-table th, .task-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.task-table th {
+    background-color: #f0f0f0;
+    position: sticky;
+    top: 0;
+}
+
+.task-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.task-row:hover {
+    background-color: #f5f5f5;
+}
+
+.task-id {
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.task-btn {
+    font-size: 0.8em;
+    border: none;
+    padding: 3px 6px;
+    margin-right: 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: white;
+}
+
+.task-btn.todo {
+    background-color: var(--color-todo);
+}
+
+.task-btn.ready {
+    background-color: var(--color-ready);
+}
+
+.task-btn.doing {
+    background-color: var(--color-doing);
+}
+
+.task-btn.testing {
+    background-color: var(--color-testing);
+}
+
+/* Traceability Matrix */
+.matrix-table {
+    border-collapse: collapse;
+    margin-top: 20px;
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+}
+
+.matrix-table th, .matrix-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.matrix-table th {
+    background-color: #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.matrix-table th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    background-color: #f0f0f0;
+}
+
+.matrix-cell.has-relation {
+    background-color: #3498db;
+    color: white;
+}
+
+.clickable-task {
+    cursor: pointer;
+    text-align: left;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clickable-task:hover {
+    text-decoration: underline;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 800px;
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+.task-status-select, .task-assignee-select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Filters */
+.filters {
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    margin-bottom: 10px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.filter-group select, .filter-group input {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 100%;
+    max-width: 300px;
+}
+
+#apply-filters {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#apply-filters:hover {
+    background-color: #2980b9;
+}
+
+/* Utilities */
+.empty-state {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.more-tasks {
+    font-size: 0.8em;
+    color: #666;
+    font-style: italic;
+}
+
+.refresh-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    z-index: 1000;
+    animation: fadeInOut 3s forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .project-selector {
+        margin-top: 10px;
+        width: 100%;
+    }
+    
+    .project-selector select {
+        width: 100%;
+    }
+    
+    .tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-button {
+        flex: 1 0 auto;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+    }
+}

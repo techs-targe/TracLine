@@ -1,0 +1,41 @@
+# TracLine Configuration Example
+# Copy this file to tracline.yaml and adjust settings as needed
+
+database:
+  # Database type: postgresql, sqlite
+  type: postgresql
+  
+  # PostgreSQL configuration
+  host: localhost
+  port: 5432
+  name: tracline
+  user: postgres
+  password: # Set via TRACLINE_DB_PASSWORD environment variable
+  
+  # SQLite configuration (when type: sqlite)
+  # url: ~/.tracline/tracline.db  # Or specify absolute path
+
+defaults:
+  # Default assignee for new tasks
+  assignee: # Set via TRACLINE_ASSIGNEE environment variable
+  
+  # Default priority (1-5, where 5 is highest)
+  priority: 3
+  
+  # Default project
+  project: DEFAULT-PROJECT
+
+workflow:
+  # Custom intermediate states between READY and DONE
+  custom_states:
+    - DOING
+    - TESTING
+  
+  # Custom state transitions (optional)
+  # If not specified, default transitions are used
+  transitions: {}
+    # Example custom transitions:
+    # TODO: [READY]
+    # READY: [DOING]
+    # DOING: [TESTING, DONE]
+    # TESTING: [DONE, DOING]

@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TracLine Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=5.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css">
+    <style>
+        /* ================= Base styles (common for all modes) ================ */
+        #team-hierarchy {
+            display: block;          /* disable flex */
+            width: 100%;
+            margin: 0;               /* disable centering */
+            padding: 0;
+        }
+
+        /* Remove fixed card width for now (also remove !important) */
+        .member-card {
+            width: 160px;
+            min-width: 160px;
+            max-width: 160px;
+        }
+
+        /* Override member-card for org-chart cards - more specific selectors */
+        .org-card.member-card,
+        .org-card.leader-card,
+        .org-card.executive-card,
+        .org-card.ceo-card {
+            width: 220px !important;
+            min-width: 220px !important;
+            max-width: 220px !important;
+        }
+
+        /* ---------- Pyramid View ---------- */
+        #team-hierarchy.view-pyramid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Card sizing - override with org-chart specific rules */
+        #team-hierarchy.view-pyramid .member-card {
+            width: 160px;
+            min-width: 160px;
+            max-width: 160px;
+        }
+
+        /* Override pyramid member-card when it's an org-card */
+        #team-hierarchy.view-pyramid .org-card {
+            width: 220px !important;
+            min-width: 220px !important;
+            max-width: 220px !important;
+        }
+        
+
+        /* ---------- List View - Complete Rebuild ---------- */
+        /* Container styles */
+        #team-hierarchy.view-list {
+            display: block !important;
+            width: 100% !important;
+            background: white !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+            overflow: hidden !important;
+        }
+        
+        /* Member list item - dedicated element */
+        #team-hierarchy.view-list .member-list-item {
+            /* Basic layout */
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            height: 60px !important;
+            min-height: 60px !important;
+            max-height: 60px !important;
+            padding: 0 15px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            
+            /* Appearance */
+            border-bottom: 1px solid #eee !important;
+            border-radius: 0 !important;
+            background: white !important;
+            
+            /* Interactions */
+            cursor: pointer !important;
+            transition: background-color 0.2s !important;
+            
+            /* Fix any possible issues */
+            overflow: hidden !important;
+            position: relative !important;
+            flex-wrap: nowrap !important;
+        }
+        
+        #team-hierarchy.view-list .member-list-item:hover {
+            background-color: #f8f8f8 !important;
+        }
+        
+        /* Profile photo */
+        #team-hierarchy.view-list .member-photo {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            max-width: 40px !important;
+            border-radius: 50% !important;
+            margin-right: 15px !important;
+            flex-shrink: 0 !important;
+            overflow: hidden !important;
+            
+            /* Center content */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background-color: #3498db !important;
+            color: white !important;
+            font-size: 18px !important;
+        }
+        
+        #team-hierarchy.view-list .member-photo img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+        
+        /* Member name */
+        #team-hierarchy.view-list .member-name {
+            width: 160px !important;
+            min-width: 160px !important;
+            max-width: 160px !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            margin: 0 15px 0 0 !important;
+            padding: 0 !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* Role badge */
+        #team-hierarchy.view-list .role-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 80px !important;
+            min-width: 80px !important;
+            max-width: 80px !important;
+            font-size: 12px !important;
+            margin: 0 15px 0 0 !important;
+            padding: 3px 8px !important;
+            text-align: center !important;
+            flex-shrink: 0 !important;
+            background-color: #3498db !important;
+            color: white !important;
+            border-radius: 4px !important;
+        }
+        
+        /* Task stats area */
+        #team-hierarchy.view-list .task-stats {
+            display: flex !important;
+            align-items: center !important;
+            margin-right: 0 !important;
+            flex: 1 !important;
+            gap: 5px !important;
+        }
+        
+        /* Task count pills - ALL uniformly styled */
+        #team-hierarchy.view-list .todo-count,
+        #team-hierarchy.view-list .ready-count,
+        #team-hierarchy.view-list .doing-count,
+        #team-hierarchy.view-list .testing-count,
+        #team-hierarchy.view-list .task-count {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 0 !important;
+            padding: 2px 6px !important;
+            border-radius: 12px !important;
+            font-size: 12px !important;
+            min-width: 28px !important;
+            font-weight: normal !important;
+        }
+        
+        /* Status-specific styling */
+        #team-hierarchy.view-list .todo-count { background: #f0f0f0 !important; color: #666 !important; }
+        #team-hierarchy.view-list .ready-count { background: #ffe4e6 !important; color: #ff7675 !important; }
+        #team-hierarchy.view-list .doing-count { background: #e6fff5 !important; color: #00b894 !important; }
+        #team-hierarchy.view-list .testing-count { background: #e3f2fd !important; color: #0984e3 !important; }
+        #team-hierarchy.view-list .task-count { background: #eee !important; color: #666 !important; margin-left: auto !important; }
+
+        /* ---------- Tile View - Complete Rebuild ---------- */
+        /* Container grid */
+        #team-hierarchy.view-tile {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+            gap: 15px !important;
+            width: 100% !important;
+            padding: 10px !important;
+        }
+        
+        /* Dedicated tile element for members */
+        #team-hierarchy.view-tile .member-tile {
+            /* Size constraints - increased height for tasks */
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 280px !important; /* Increased height to fit task info */
+            min-height: 280px !important;
+            max-height: 280px !important;
+            margin: 0 !important;
+            padding: 15px !important;
+            
+            /* Flex layout */
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+            
+            /* Clean appearance */
+            border-radius: 8px !important;
+            background: white !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+            
+            /* Interactions */
+            cursor: pointer !important;
+            transition: transform 0.2s, box-shadow 0.2s !important;
+            
+            /* Handle overflow - allow scrolling if needed */
+            overflow: visible !important;
+            position: relative !important;
+        }
+        
+        #team-hierarchy.view-tile .member-tile:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        }
+        
+        /* Center photo */
+        #team-hierarchy.view-tile .member-photo {
+            width: 64px !important;
+            height: 64px !important;
+            min-width: 64px !important;
+            max-width: 64px !important;
+            min-height: 64px !important;
+            max-height: 64px !important;
+            border-radius: 50% !important;
+            margin: 0 0 12px 0 !important;
+            overflow: hidden !important;
+            flex-shrink: 0 !important;
+            
+            /* Center content */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background-color: #3498db !important;
+            color: white !important;
+            font-size: 24px !important;
+        }
+        
+        #team-hierarchy.view-tile .member-photo img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+        
+        /* Member name - more prominent - UPDATED STYLE */
+        #team-hierarchy.view-tile .member-name {
+            font-size: 18px !important;
+            font-weight: bold !important;
+            margin: 0 0 8px 0 !important;
+            padding: 5px 0 !important;
+            width: 100% !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            text-align: center !important;
+            color: #2c3e50 !important;
+            border-bottom: 2px solid #3498db !important;  /* Blue border */
+            background-color: #f0f8ff !important;         /* Light blue background */
+            border-radius: 4px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        }
+        
+        /* Role badge */
+        #team-hierarchy.view-tile .role-badge {
+            margin: 0 0 12px 0 !important;
+            width: auto !important;
+            padding: 3px 8px !important;
+            background-color: #3498db !important;
+            color: white !important;
+            border-radius: 4px !important;
+            font-size: 12px !important;
+        }
+        
+        /* Task summary section - simple task count only */
+        #team-hierarchy.view-tile .task-summary {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            margin: 8px 0 !important;
+            padding: 4px 8px !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
+            background: #f0f8ff !important;
+            color: #666 !important;
+            border-radius: 4px !important;
+        }
+        
+        /* Status labels - adding manually in JavaScript */
+        .todo-count::before { content: "" !important; }
+        .ready-count::before { content: "" !important; }
+        .doing-count::before { content: "" !important; }
+        .testing-count::before { content: "" !important; }
+        .task-count::before { content: "" !important; }
+        
+        /* Ensure no sub-team-group elements are displayed */
+        .sub-team-group {
+            display: none !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+        }
+        
+        /* Recent task buttons in list view */
+        .recent-task-buttons {
+            display: flex !important;
+            align-items: center !important;
+            margin-left: 10px !important;
+            gap: 5px !important;
+        }
+        
+        /* Task buttons in list view */
+        #team-hierarchy.view-list .task-btn {
+            font-size: 11px !important;
+            padding: 2px 5px !important;
+            border-radius: 3px !important;
+            background-color: #f0f0f0 !important;
+            border: none !important;
+            cursor: pointer !important;
+            white-space: nowrap !important;
+            min-width: 40px !important;
+            text-align: center !important;
+        }
+        
+        /* Task button colors */
+        #team-hierarchy.view-list .task-btn.todo { background-color: #f0f0f0 !important; color: #666 !important; }
+        #team-hierarchy.view-list .task-btn.ready { background-color: #ff7675 !important; color: white !important; }
+        #team-hierarchy.view-list .task-btn.doing { background-color: #00b894 !important; color: white !important; }
+        #team-hierarchy.view-list .task-btn.testing { background-color: #0984e3 !important; color: white !important; }
+        
+        /* Task buttons in tile view - improved layout */
+        .tile-task-buttons {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+            gap: 4px !important;
+            margin-top: 8px !important;
+            width: 100% !important;
+            padding: 0 5px !important;
+            flex: 1 !important;
+            overflow: visible !important;
+        }
+        
+        .task-item {
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            gap: 6px !important; 
+            padding: 3px 0 !important;
+            border-bottom: 1px dotted #eee !important;
+            min-height: 24px !important;
+        }
+        
+        .task-name {
+            font-size: 11px !important;
+            color: #333 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            cursor: pointer !important;
+            flex: 1 !important;
+            line-height: 1.2 !important;
+        }
+        
+        #team-hierarchy.view-tile .task-btn {
+            font-size: 10px !important;
+            padding: 2px 4px !important;
+            border-radius: 3px !important;
+            background-color: #f0f0f0 !important;
+            border: none !important;
+            cursor: pointer !important;
+            white-space: nowrap !important;
+            min-width: 30px !important;
+            text-align: center !important;
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* Task button colors for tile view */
+        #team-hierarchy.view-tile .task-btn.todo { background-color: #f0f0f0 !important; color: #666 !important; }
+        #team-hierarchy.view-tile .task-btn.ready { background-color: #ff7675 !important; color: white !important; }
+        #team-hierarchy.view-tile .task-btn.doing { background-color: #00b894 !important; color: white !important; }
+        #team-hierarchy.view-tile .task-btn.testing { background-color: #0984e3 !important; color: white !important; }
+        
+        /* More tasks indicator */
+        .more-tasks {
+            font-size: 10px !important;
+            color: #666 !important;
+            white-space: nowrap !important;
+            text-align: center !important;
+            width: 100% !important;
+            padding: 2px 0 !important;
+        }
+        
+        /* No tasks message */
+        .no-tasks {
+            font-size: 11px !important;
+            color: #999 !important;
+            font-style: italic !important;
+            text-align: center !important;
+            width: 100% !important;
+            padding: 8px 0 !important;
+        }
+
+        /* Task Relationships Styles */
+        .relationships-container {
+            margin: 10px 0;
+        }
+        
+        .relationship-group {
+            margin-bottom: 15px;
+        }
+        
+        .relationship-group h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+        
+        .relationship-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .relationship-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #f5f5f5;
+            gap: 8px;
+        }
+        
+        .relationship-item:last-child {
+            border-bottom: none;
+        }
+
+
+        /* Organization Chart View Styles - Also used by Pyramid view */
+        .view-pyramid, .view-org-chart {
+            display: block !important;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .org-chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            min-width: 100%;
+        }
+
+        .org-level {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+            position: relative;
+        }
+
+        .org-level.ceo-level {
+            justify-content: center;
+        }
+
+        .org-level.executives-level {
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .org-level.teams-level {
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .org-team-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            min-width: 200px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .org-team-leader {
+            border: 3px solid #007bff;
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+        }
+
+        .org-team-members {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .org-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            box-sizing: border-box;
+        }
+
+        .org-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        .org-card.ceo-card {
+            border: 3px solid #dc3545;
+            background: linear-gradient(135deg, #fff5f5, #ffffff);
+            min-width: 220px;
+            width: 220px;
+        }
+
+        .org-card.executive-card {
+            border: 2px solid #fd7e14;
+            background: linear-gradient(135deg, #fff8f0, #ffffff);
+            min-width: 220px;
+            width: 220px;
+        }
+
+        .org-card.leader-card {
+            border: 2px solid #20c997;
+            background: linear-gradient(135deg, #f0fdf9, #ffffff);
+            min-width: 220px;
+            width: 220px;
+        }
+
+        .org-card.member-card {
+            border: 1px solid #6c757d;
+            background: #ffffff;
+            min-width: 220px;
+            width: 220px;
+        }
+
+        .org-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex: 1;
+        }
+
+        .org-card-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #007bff;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .org-card-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .org-card-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 50px;
+        }
+
+        .org-card-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .org-card-title {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .org-card-role {
+            font-size: 10px;
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .org-card-task-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin: 8px 0;
+            flex-grow: 1;
+        }
+
+        .org-task-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 3px 6px;
+        }
+
+        .org-task-item .task-btn {
+            font-size: 9px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 35px;
+        }
+
+        .org-task-name {
+            font-size: 10px;
+            color: #666;
+            cursor: pointer;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .org-more-tasks {
+            font-size: 9px;
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 2px;
+        }
+
+        .org-no-tasks {
+            font-size: 10px;
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 4px;
+        }
+
+        .org-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 8px;
+            flex-shrink: 0;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .org-task-count {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .org-reports-count {
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        /* Connection lines for org chart */
+        .org-level::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 15px;
+            background: #ccc;
+        }
+
+        .org-level.ceo-level::before {
+            display: none;
+        }
+
+        .org-team-group::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 15px;
+            background: #ccc;
+        }
+        
+        .relationship-type {
+            background: #e9f4ff;
+            color: #0066cc;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .task-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+        
+        .task-link:hover {
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .task-title-small {
+            color: #666;
+            font-size: 12px;
+            flex: 1;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        /* Task View Mode Switcher */
+        .task-mode-btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            margin-right: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .task-mode-btn:hover {
+            background: #f0f8ff;
+            border-color: #007bff;
+        }
+        
+        .task-mode-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        /* Task Hierarchy Styles */
+        .tasks-hierarchy {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .hierarchy-header h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .hierarchy-header p {
+            margin: 0 0 20px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .hierarchy-tree {
+            font-family: 'Courier New', monospace;
+        }
+        
+        .tree-node {
+            margin: 2px 0;
+        }
+        
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            gap: 8px;
+        }
+        
+        .tree-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .tree-item.has-children {
+            font-weight: 500;
+        }
+        
+        .task-id-link {
+            color: #007bff;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 2px 4px;
+            border-radius: 3px;
+            min-width: 100px;
+        }
+        
+        .task-id-link:hover {
+            background: #007bff;
+            color: white;
+        }
+        
+        .tree-item .task-title {
+            flex: 1;
+            color: #333;
+            margin-right: 10px;
+        }
+        
+        .tree-item .task-status {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .tree-item .task-assignee {
+            color: #666;
+            font-size: 12px;
+            min-width: 100px;
+        }
+
+        /* Kanban Placeholder Styles */
+        .tasks-kanban {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .kanban-placeholder {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .kanban-column {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .kanban-column h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        /* Photo Upload and Crop Modal Styles */
+        .crop-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+        
+        .crop-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .crop-modal-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .crop-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .close-crop {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        
+        .close-crop:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .crop-modal-body {
+            padding: 20px;
+        }
+        
+        .upload-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .upload-label {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+        }
+        
+        .upload-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .upload-hint {
+            margin: 10px 0 0 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        #crop-section {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        
+        #crop-container {
+            text-align: center;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #crop-image {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 4px;
+            display: block;
+        }
+        
+        /* Override Cropper.js styles for better appearance */
+        .cropper-container {
+            direction: ltr;
+            font-size: 0;
+            line-height: 0;
+            position: relative;
+            touch-action: none;
+            user-select: none;
+        }
+        
+        .cropper-container img {
+            display: block;
+            height: 100%;
+            image-orientation: 0deg;
+            max-height: none;
+            max-width: none;
+            min-height: 0;
+            min-width: 0;
+            width: 100%;
+        }
+        
+        .crop-controls {
+            text-align: center;
+            gap: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        /* Copy button hover effects */
+        #copy-file-path-btn:hover {
+            background: #218838 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        #copy-file-content-btn:hover {
+            background: #0056b3 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        /* Copy success animation */
+        .copy-success {
+            animation: copySuccess 0.5s ease-in-out;
+        }
+        
+        @keyframes copySuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background: #5cb85c !important; }
+            100% { transform: scale(1); }
+        }
+
+        /* Clickable Photo Styles */
+        .clickable-photo {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .clickable-photo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border-radius: inherit;
+        }
+        
+        .clickable-photo:hover .photo-overlay {
+            opacity: 1;
+        }
+        
+        .photo-overlay span {
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        /* Pyramid task buttons */
+        .pyramid-task-buttons {
+            display: flex !important;
+            flex-direction: column !important;
+            margin-top: 5px !important;
+            gap: 3px !important;
+        }
+
+        .pyramid-task-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            background: #f8f9fa !important;
+            border-radius: 3px !important;
+            padding: 2px 4px !important;
+        }
+
+        .pyramid-task-item .task-name {
+            font-size: 10px !important;
+            color: #666 !important;
+            cursor: pointer !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            flex: 1 !important;
+        }
+
+        .pyramid-task-buttons .more-tasks {
+            font-size: 9px !important;
+            color: #999 !important;
+            text-align: center !important;
+            padding: 1px 3px !important;
+        }
+        
+        #team-hierarchy.view-pyramid .task-btn {
+            font-size: 11px !important;
+            padding: 2px 5px !important;
+            border-radius: 3px !important;
+            background-color: #f0f0f0 !important;
+            border: none !important;
+            cursor: pointer !important;
+            white-space: nowrap !important;
+            min-width: 40px !important;
+            text-align: center !important;
+        }
+        
+        /* Task button colors for pyramid view */
+        #team-hierarchy.view-pyramid .task-btn.todo { background-color: #f0f0f0 !important; color: #666 !important; }
+        #team-hierarchy.view-pyramid .task-btn.ready { background-color: #ff7675 !important; color: white !important; }
+        #team-hierarchy.view-pyramid .task-btn.doing { background-color: #00b894 !important; color: white !important; }
+        #team-hierarchy.view-pyramid .task-btn.testing { background-color: #0984e3 !important; color: white !important; }
+        
+        /* Member detail modal task items */
+        .task-detail-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important; 
+            padding: 8px 0 !important;
+            border-bottom: 1px solid #eee !important;
+        }
+        
+        .task-detail-item .task-status {
+            font-size: 11px !important;
+            padding: 2px 6px !important;
+            border-radius: 12px !important;
+            font-weight: bold !important;
+            min-width: 60px !important;
+            text-align: center !important;
+        }
+        
+        .task-detail-item .task-btn {
+            font-size: 11px !important;
+            padding: 4px 8px !important;
+            border-radius: 3px !important;
+            border: none !important;
+            cursor: pointer !important;
+            white-space: nowrap !important;
+            min-width: 50px !important;
+            text-align: center !important;
+            font-weight: bold !important;
+        }
+        
+        .task-detail-item .task-title {
+            cursor: pointer !important;
+            color: #333 !important;
+            flex: 1 !important;
+            font-size: 14px !important;
+        }
+        
+        .task-detail-item .task-title:hover {
+            color: #0984e3 !important;
+            text-decoration: underline !important;
+        }
+        
+        /* Task button colors for member detail modal */
+        .task-detail-item .task-btn.todo { background-color: #f0f0f0 !important; color: #666 !important; }
+        .task-detail-item .task-btn.ready { background-color: #ff7675 !important; color: white !important; }
+        .task-detail-item .task-btn.doing { background-color: #00b894 !important; color: white !important; }
+        .task-detail-item .task-btn.testing { background-color: #0984e3 !important; color: white !important; }
+        
+        /* Task status styling in member detail modal */
+        .task-detail-item .task-status.todo { background: #f0f0f0 !important; color: #666 !important; }
+        .task-detail-item .task-status.ready { background: #ffe4e6 !important; color: #ff7675 !important; }
+        .task-detail-item .task-status.doing { background: #e6fff5 !important; color: #00b894 !important; }
+        .task-detail-item .task-status.testing { background: #e3f2fd !important; color: #0984e3 !important; }
+        
+        /* Header controls */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .auto-refresh-control {
+            display: flex;
+            align-items: center;
+        }
+        
+        .auto-refresh-control label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .auto-refresh-control input[type="checkbox"] {
+            margin: 0;
+        }
+        
+        /* Settings Tab Styles */
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .settings-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .settings-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+        }
+
+        .database-info {
+            font-family: 'Courier New', monospace;
+        }
+
+        .database-info .info-row {
+            display: flex;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .database-info .info-label {
+            font-weight: bold;
+            min-width: 150px;
+            color: #555;
+        }
+
+        .database-info .info-value {
+            color: #007bff;
+            word-break: break-all;
+        }
+
+        .database-info .loading {
+            color: #666;
+            font-style: italic;
+        }
+
+        .database-info .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        /* Task status styles */
+        .task-status {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .task-status.todo { background: #f0f0f0; color: #666; }
+        .task-status.ready { background: #ffe4e6; color: #ff7675; }
+        .task-status.doing { background: #e6fff5; color: #00b894; }
+        .task-status.testing { background: #e3f2fd; color: #0984e3; }
+        .task-status.done { background: #d4edda; color: #155724; }
+        .task-status.unknown { background: #e2e3e5; color: #6c757d; }
+        
+        /* Button styles */
+        .mode-btn {
+            background: #e0e0e0;
+            border: none;
+            padding: 5px 10px;
+            margin-right: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .mode-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        /* Independent Contributors Section */
+        .independent-level {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px dashed #ddd;
+        }
+        
+        .independent-header {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .independent-header h4 {
+            margin: 0;
+            color: #666;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .independent-level .org-team-members {
+            justify-content: center;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TracLine Dashboard</h1>
+            <div class="header-controls">
+                <div class="project-selector">
+                    <label for="project-select">Project:</label>
+                    <select id="project-select">
+                        <option value="">Select Project</option>
+                    </select>
+                </div>
+                <div class="auto-refresh-control">
+                    <label for="auto-refresh">
+                        <input type="checkbox" id="auto-refresh" checked>
+                        Auto Refresh (10s)
+                    </label>
+                </div>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-button active" data-tab="team">Team Dashboard</button>
+            <button class="tab-button" data-tab="tasks">Task Dashboard</button>
+            <button class="tab-button" data-tab="logs">Project Logs</button>
+            <button class="tab-button" data-tab="matrix">Traceability Matrix</button>
+            <button class="tab-button" data-tab="settings">Settings</button>
+        </nav>
+
+        <main>
+            <!-- Team Dashboard Tab -->
+            <div id="team-tab" class="tab-content active">
+                <!-- View Mode Switcher (Simplified) -->
+                <div class="view-switcher" style="display: flex; align-items: center; margin-bottom: 15px; background: #f5f5f5; padding: 8px; border-radius: 4px;">
+                    <div style="margin-right: 10px; font-weight: bold;">View Mode:</div>
+                    <button class="mode-btn active" data-mode="pyramid">Pyramid</button>
+                    <button class="mode-btn" data-mode="list">List</button>
+                    <button class="mode-btn" data-mode="tile">Tile</button>
+                </div>
+                
+                <!-- Inline JavaScript for view mode switching - Ultra Simple Edition -->
+                <script>
+                    // view mode switch - ultra simple implementation
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const root = document.getElementById('team-hierarchy');
+                        const buttons = document.querySelectorAll('.mode-btn');
+                        
+                        if (!root) {
+                            console.error('team-hierarchy element not found!');
+                            return;
+                        }
+                        
+                        console.log("View mode switcher initialized");
+                        
+                        buttons.forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const mode = btn.dataset.mode; // pyramid | list | tile
+                                
+                                // Simple implementation that only changes classes
+                                // Don't use className (overwrites all), use classList
+                                root.classList.remove('view-pyramid', 'view-list', 'view-tile');
+                                root.classList.add(`view-${mode}`);
+                                
+                                console.log(`Switched to ${mode} view mode`);
+
+                                // Update button active state
+                                buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+                                // Save preference to localStorage
+                                localStorage.setItem('teamViewMode', mode);
+                                
+                                // Force reload of team data
+                                if (window.loadTeamData) {
+                                    console.log('Reloading team data with new view mode:', mode);
+                                    window.loadTeamData();
+                                }
+                            });
+                        });
+
+                        // Load saved preference or default to pyramid
+                        const saved = localStorage.getItem('teamViewMode') || 'pyramid';
+                        document.querySelector(`.mode-btn[data-mode="${saved}"]`)?.click();
+                    });
+                </script>
+                
+                <div class="team-container">
+                    <h2>Team Members</h2>
+                    <div id="team-hierarchy" class="team-hierarchy">
+                        <!-- Team members will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Dashboard Tab -->
+            <div id="tasks-tab" class="tab-content">
+                <!-- Task View Mode Switcher -->
+                <div class="task-view-switcher" style="display: flex; align-items: center; margin-bottom: 15px; background: #f0f8ff; padding: 8px; border-radius: 4px;">
+                    <div style="margin-right: 10px; font-weight: bold;">Task View:</div>
+                    <button class="task-mode-btn active" data-mode="list">📋 List</button>
+                    <button class="task-mode-btn" data-mode="hierarchy">🌳 Hierarchy</button>
+                    <button class="task-mode-btn" data-mode="kanban">🗃️ Kanban</button>
+                </div>
+                
+                <div class="filters">
+                    <h3>Filters</h3>
+                    <div class="filter-group">
+                        <label for="assignee-filter">Assignee:</label>
+                        <select id="assignee-filter">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="status-filter">Status:</label>
+                        <select id="status-filter" multiple size="5">
+                            <option value="TODO">TODO</option>
+                            <option value="READY">READY</option>
+                            <option value="DOING">DOING</option>
+                            <option value="TESTING">TESTING</option>
+                            <option value="DONE">DONE</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="priority-filter">Priority:</label>
+                        <select id="priority-filter">
+                            <option value="">All</option>
+                            <option value="1">1 (Low)</option>
+                            <option value="2">2</option>
+                            <option value="3">3 (Medium)</option>
+                            <option value="4">4</option>
+                            <option value="5">5 (High)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>
+                            <input type="checkbox" id="non-done-filter">
+                            Show only non-DONE tasks
+                        </label>
+                    </div>
+                    <button id="apply-filters">Apply Filters</button>
+                </div>
+                <div id="tasks-list" class="tasks-list">
+                    <!-- Tasks will be dynamically loaded here -->
+                </div>
+                
+                <div id="tasks-hierarchy" class="tasks-hierarchy" style="display: none;">
+                    <!-- Task hierarchy tree will be dynamically loaded here -->
+                </div>
+                
+                <div id="tasks-kanban" class="tasks-kanban" style="display: none;">
+                    <!-- Kanban board will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Traceability Matrix Tab -->
+            <div id="matrix-tab" class="tab-content">
+                <h2>Traceability Matrix</h2>
+                
+                <!-- Filter Controls -->
+                <div class="matrix-filters" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">Filters</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="filter-group">
+                            <label for="matrix-file-extension">File Extension:</label>
+                            <select id="matrix-file-extension">
+                                <option value="">All</option>
+                                <option value=".py">.py</option>
+                                <option value=".js">.js</option>
+                                <option value=".yaml">.yaml</option>
+                                <option value=".md">.md</option>
+                                <option value=".html">.html</option>
+                                <option value=".css">.css</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="matrix-file-name">File Name Contains:</label>
+                            <input type="text" id="matrix-file-name" placeholder="e.g., test, config">
+                        </div>
+                        <div class="filter-group">
+                            <label for="matrix-task-name">Task Name Contains:</label>
+                            <input type="text" id="matrix-task-name" placeholder="e.g., feature, bug">
+                        </div>
+                        <div class="filter-group">
+                            <label>
+                                <input type="checkbox" id="matrix-show-ref-counts" checked>
+                                Show Reference Counts
+                            </label>
+                        </div>
+                    </div>
+                    <button id="apply-matrix-filters" style="margin-top: 15px; padding: 12px 30px; background: #2196F3; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;" 
+                            onmouseover="this.style.background='#1976D2'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.3)';" 
+                            onmouseout="this.style.background='#2196F3'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.2)';">
+                        🔍 Apply Filters
+                    </button>
+                </div>
+                
+                <!-- Matrix Statistics -->
+                <div id="matrix-stats" style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 20px; display: none;">
+                    <h4 style="margin: 0 0 10px 0;">Statistics</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <div>Total Tasks: <strong id="stat-total-tasks">0</strong></div>
+                        <div>Total Files: <strong id="stat-total-files">0</strong></div>
+                        <div>Total Associations: <strong id="stat-total-associations">0</strong></div>
+                        <div>Avg Files/Task: <strong id="stat-avg-files-per-task">0</strong></div>
+                    </div>
+                </div>
+                
+                <div id="matrix-container" class="matrix-container">
+                    <!-- Matrix will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Project Logs Tab -->
+            <div id="logs-tab" class="tab-content">
+                <h2>Project Logs</h2>
+                <div class="logs-container">
+                    <!-- Logs filter and controls -->
+                    <div class="logs-controls" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <div>
+                            <label for="logs-limit">Show:</label>
+                            <select id="logs-limit" style="margin-left: 5px;">
+                                <option value="50">50 logs</option>
+                                <option value="100" selected>100 logs</option>
+                                <option value="200">200 logs</option>
+                                <option value="500">500 logs</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="logs-level">Level:</label>
+                            <select id="logs-level" style="margin-left: 5px;">
+                                <option value="">All levels</option>
+                                <option value="DEBUG">DEBUG</option>
+                                <option value="INFO">INFO</option>
+                                <option value="WARNING">WARNING</option>
+                                <option value="ERROR">ERROR</option>
+                            </select>
+                        </div>
+                        <button id="refresh-logs" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🔄 Refresh
+                        </button>
+                        <button id="clear-logs-display" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🗑️ Clear Display
+                        </button>
+                    </div>
+                    
+                    <!-- Logs display area -->
+                    <div id="logs-content" class="logs-content" style="background: white; border: 1px solid #dee2e6; border-radius: 8px; max-height: 600px; overflow-y: auto;">
+                        <div class="loading-logs" style="text-align: center; padding: 40px; color: #666;">
+                            Select a project to view logs
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div id="logs-pagination" class="logs-pagination" style="margin-top: 15px; text-align: center; display: none;">
+                        <button id="logs-prev" style="padding: 8px 16px; margin: 0 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;" disabled>
+                            ← Previous
+                        </button>
+                        <span id="logs-page-info" style="margin: 0 20px; color: #666;"></span>
+                        <button id="logs-next" style="padding: 8px 16px; margin: 0 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;" disabled>
+                            Next →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content">
+                <h2>Settings</h2>
+                <div class="settings-container">
+                    <!-- Project Statistics Section -->
+                    <div class="settings-section" style="background: #e8f4fd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #007bff;">
+                        <h3>📊 Project Statistics</h3>
+                        <div id="project-statistics-content">
+                            <p class="loading">Loading project statistics...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Project Settings Section -->
+                    <div class="settings-section" style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3>Project Settings</h3>
+                        <div id="project-settings-content">
+                            <p class="loading">Loading project settings...</p>
+                        </div>
+                        
+                        <!-- Project Root Setting -->
+                        <div id="project-root-setting" style="display: none; margin-top: 20px;">
+                            <h4>Project Root Directory</h4>
+                            <p style="color: #666; margin-bottom: 15px;">
+                                Set the root directory for this project. This allows file associations to use relative paths.
+                            </p>
+                            <div style="margin-bottom: 20px;">
+                                <label for="project-root" style="display: block; margin-bottom: 5px; font-weight: bold;">Project Root Path:</label>
+                                <input type="text" id="project-root" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;" placeholder="/path/to/project/root">
+                                <small style="color: #666; display: block; margin-top: 5px;">Leave empty to require absolute paths for file associations</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Strict Mode Settings -->
+                        <div id="strict-mode-settings" style="display: none; margin-top: 20px;">
+                            <h4>Strict Mode Settings</h4>
+                            <p style="color: #666; margin-bottom: 15px;">
+                                Enable strict mode to enforce specific requirements before tasks can advance to DONE status.
+                            </p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="strict-doc-read" style="margin-right: 10px;">
+                                    <div>
+                                        <strong>Strict Document Read</strong>
+                                        <div style="color: #666; font-size: 14px;">Require reading all associated documents before marking task as DONE</div>
+                                    </div>
+                                </label>
+                                
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="strict-file-ref" style="margin-right: 10px;">
+                                    <div>
+                                        <strong>Strict File Reference</strong>
+                                        <div style="color: #666; font-size: 14px;">Require file associations before marking task as DONE</div>
+                                    </div>
+                                </label>
+                                
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="strict-log-entry" style="margin-right: 10px;">
+                                    <div>
+                                        <strong>Strict Log Entry</strong>
+                                        <div style="color: #666; font-size: 14px;">Require log entries before marking task as DONE</div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <button id="save-project-settings" style="margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Save Settings
+                            </button>
+                            
+                            <div id="settings-save-status" style="margin-top: 10px; display: none;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timezone Settings Section -->
+                    <div class="settings-section" style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3>🌍 Timezone Settings</h3>
+                        <div id="timezone-settings">
+                            <p style="color: #666; margin-bottom: 15px;">
+                                Configure the timezone for displaying timestamps in logs and activities.
+                            </p>
+                            <div style="margin-bottom: 20px;">
+                                <label for="timezone-select" style="display: block; margin-bottom: 5px; font-weight: bold;">Select Timezone:</label>
+                                <select id="timezone-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <option value="UTC">UTC (Coordinated Universal Time)</option>
+                                    <option value="America/New_York">America/New York (EST/EDT)</option>
+                                    <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+                                    <option value="America/Denver">America/Denver (MST/MDT)</option>
+                                    <option value="America/Los_Angeles">America/Los Angeles (PST/PDT)</option>
+                                    <option value="Europe/London">Europe/London (GMT/BST)</option>
+                                    <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                                    <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
+                                    <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                                    <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+                                    <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                                    <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                                    <option value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</option>
+                                    <option value="Pacific/Auckland">Pacific/Auckland (NZST/NZDT)</option>
+                                </select>
+                                <small style="color: #666; display: block; margin-top: 5px;">Current browser timezone: <span id="browser-timezone"></span></small>
+                            </div>
+                            <button id="save-timezone" style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Save Timezone
+                            </button>
+                            <div id="timezone-save-status" style="margin-top: 10px; display: none;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Database Configuration Section -->
+                    <div class="settings-section">
+                        <h3>Database Configuration</h3>
+                        <div id="database-info" class="database-info">
+                            <p class="loading">Loading database information...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Member Details Modal -->
+    <div id="member-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="member-details">
+                <!-- Member details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Details Modal -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="task-details">
+                <!-- Task details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Upload and Crop Modal (dynamically populated) -->
+    <div id="crop-modal" class="crop-modal">
+        <!-- Content will be dynamically generated by JavaScript -->
+    </div>
+
+    <!-- File Viewer Modal -->
+    <div id="file-viewer-modal" class="modal">
+        <div class="modal-content" style="max-width: 90%; height: 90%; overflow: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+                <h2 id="file-viewer-title">File Viewer</h2>
+                <span class="close" onclick="closeFileViewer()">&times;</span>
+            </div>
+            <div id="file-viewer-info" style="padding: 10px; background: #f5f5f5; border-radius: 4px; margin: 10px 0;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px; align-items: center;">
+                    <div><strong>Path:</strong> <span id="file-path-display"></span></div>
+                    <div><strong>Size:</strong> <span id="file-size-display"></span></div>
+                    <div><strong>Lines:</strong> <span id="file-lines-display"></span></div>
+                    <div><strong>Type:</strong> <span id="file-type-display"></span></div>
+                </div>
+            </div>
+            <div id="file-viewer-actions" style="padding: 10px 0; display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="copy-file-path-btn" onclick="copyFilePath()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px; transition: background 0.2s;">
+                    <span style="font-size: 16px;">📋</span> Copy Full Path
+                </button>
+                <button id="copy-file-content-btn" onclick="copyFileContent()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px; transition: background 0.2s;">
+                    <span style="font-size: 16px;">📄</span> Copy Code
+                </button>
+            </div>
+            <div id="file-viewer-content" style="position: relative;">
+                <pre id="file-content-display" style="background: #f8f8f8; padding: 15px; border-radius: 4px; overflow: auto; max-height: 600px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5;"></pre>
+                <div id="file-viewer-error" style="display: none; padding: 20px; text-align: center; color: #dc3545;">
+                    <p style="font-size: 16px; margin-bottom: 10px;"></p>
+                </div>
+                <div id="file-viewer-loading" style="display: none; padding: 40px; text-align: center;">
+                    <div style="font-size: 24px; color: #3498db; animation: spin 1s linear infinite;">⟳</div>
+                    <p style="margin-top: 10px;">Loading file...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+    <script src="/static/js/app.js?v=22.0"></script>
+</body>
+</html>

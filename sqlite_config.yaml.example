@@ -1,0 +1,8 @@
+# SQLite Configuration Example
+database:
+  type: sqlite
+  path: ~/.tracline/tracline.db
+defaults:
+  assignee: # Set via TRACLINE_ASSIGNEE environment variable
+  priority: 3
+  project: DEFAULT-PROJECT

@@ -1,0 +1,227 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+tracline.egg-info/
+PIPFILE.lock
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# TracLine specific
+*.db
+*.db-journal
+.tracline/
+tracline.yaml
+!tracline.yaml.example
+postgres_config.yaml
+sqlite_config.yaml
+!postgres_config.yaml.example
+!sqlite_config.yaml.example
+uploads/
+logs/
+temp/
+profile_images/
+
+# TaskShell specific (legacy)
+.taskshell/
+taskshell.yaml
+!taskshell.yaml.example
+
+# Configuration and secrets
+.env
+.env.local
+.env.production
+config.local.yaml
+secrets.yaml
+credentials.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+test_*_config.yaml
+test_*_final_config.yaml
+
+# Node modules (if any frontend tools are added)
+node_modules/
+
+# Development files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Personal test files and documentation
+*_REPORT.md
+*_SUMMARY.md
+*_FIX.md
+*FIX_*.md
+*_FIXES_*.md
+DOCKER_PERMISSION_FIX.md
+FIX_MISSING_DIRECTORY.md
+test_*.py
+test_*.html
+test_*.sh
+debug_*.py
+debug_*.js
+check_*.py
+create_*.py
+*demo*.py
+*demo*.html
+*demo*.sh
+diagnose_*.py
+explain_*.py
+fix_*.py
+force_*.py
+verify_*.sh
+verify_*.html
+web/test_*.py
+web/test_*.html
+web/debug_*.py
+web/check_*.py
+web/create_*.py
+web/diagnose_*.py
+web/fix_*.py
+web/quick_test.sh
+scripts/update_*.py
+scripts/add_*.py
+CLAUDE_MD_UPDATE_SUMMARY.md
+FINAL_ALL_FIXES_DONE.md
+correct_log_usage.md
+docs/development/CLAUDE.md
+doing_task_fix_demo.html
+task_hierarchy_fix.js
+show_doc_messages.py
+
+# Server logs
+server_*.log
+web/server_*.log
+
+# Test archives
+test_archive_*/

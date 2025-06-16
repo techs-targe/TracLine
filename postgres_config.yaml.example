@@ -1,0 +1,12 @@
+# PostgreSQL Configuration Example
+database:
+  type: postgresql
+  host: localhost
+  port: 5432
+  name: tracline
+  user: postgres
+  password: postgres  # Default password, can be overridden via TRACLINE_DB_PASSWORD
+defaults:
+  assignee: # Set via TRACLINE_ASSIGNEE environment variable
+  priority: 3
+  project: DEFAULT-PROJECT

@@ -1,0 +1,190 @@
+[//]: # (System prompt: think harder deep - Enable enhanced analytical thinking)
+
+## Introduction
+
+Claude is an AI programming assistant integrated with TracLine for enhanced development workflow. It provides precise code solutions, implementation guidance, and task management support.
+
+Key capabilities:
+- Accurate code implementation based on requirements
+- Focused execution without unnecessary modifications
+- High precision and reliability
+- Full development lifecycle support
+
+Your identity is set via the TASK_ASSIGNEE environment variable.
+
+## Configuration
+
+### Project Structure
+- **Project Root**: `.` (current directory)
+- **Requirements**: `./docs/requirements/requirements.md`
+- **Design Docs**: `./docs/design/base_design.md`
+- **TracLine Dir**: `../tracline` (relative to project)
+
+### Environment Variables
+
+```bash
+# Required
+export TASK_ASSIGNEE="Your Name"
+
+# Optional  
+export PROJECT_ROOT="$(pwd)"
+export TRACLINE_DIR="${PROJECT_ROOT}/../tracline"
+export TRACLINE_CONFIG="${TRACLINE_DIR}/tracline.yaml"
+export TRACLINE_DB_TYPE="sqlite"  # or "postgresql"
+export GH_TOKEN="your_github_token"  # For GitHub integration
+```
+
+## Task Workflow
+
+### Status Flow
+TODO → READY → DOING → TESTING → DONE
+
+### Quick Commands
+- `next` - Get next task
+- `done` - Advance task state
+- `done TASK-ID` - Advance specific task
+
+### Development Process
+1. Run `tracline next` to get task
+2. Run `tracline show TASK-ID --doc` to view documents
+3. Implement based on requirements
+4. Run `tracline log TASK-ID "message"` to log work
+5. Run `tracline attach TASK-ID file` to attach files
+6. Run `tracline done` to advance state
+
+## Core Commands
+
+### Task Management
+```bash
+# CRUD operations
+tracline add "TASK-ID" "Title" --description "Desc" --priority 3
+tracline show TASK-ID [--logs|--files|--doc|--json]
+tracline update TASK-ID --status READY --priority 5
+tracline delete TASK-ID --force
+
+# Listing
+tracline list [--assignee "Name"|--status DOING|--project "ID"]
+tracline ls-tasks  # v1 alias
+```
+
+### Workflow
+```bash
+# Task flow
+tracline next [--assignee "Name"|--project "ID"]
+tracline done [TASK-ID] [--status TESTING]
+tracline assign TASK-ID "Assignee"
+```
+
+### File & Log Management
+```bash
+# Files
+tracline attach TASK-ID file [--description "Desc"]
+tracline ls-files TASK-ID [--details|--json]
+tracline trace add-file file TASK-ID
+tracline trace ls-trace file
+
+# Logs
+tracline log TASK-ID "Message" [--level WARNING|ERROR]
+```
+
+### Relationships
+```bash
+tracline link PARENT-ID CHILD-ID [--type "requirement-design"]
+tracline ls-relations [TASK-ID] [--type "TYPE"|--json]
+```
+
+### Project Management
+```bash
+# CRUD
+tracline project create "ID" "Name" [--description "Desc"]
+tracline project show ID [--json]
+tracline project update ID [--name "Name"|--status "ACTIVE"]
+tracline project delete ID --force
+tracline project list [--owner "ID"|--status "ACTIVE"]
+
+# Settings (strict mode)
+tracline project settings ID --strict-file-ref  # Require file attachments
+tracline project settings ID --strict-log-entry # Require log entries
+tracline project settings ID --show             # View settings
+
+# Members
+tracline project add-members ID MEMBER1 MEMBER2
+tracline project remove-members ID MEMBER1
+tracline project members ID [--json]
+
+# Current project
+tracline project-current
+tracline project change ID
+```
+
+### Member Management
+```bash
+# CRUD
+tracline member add "ID" "Name" --role "ENGINEER" --position "MEMBER"
+tracline member show ID [--details|--json]
+tracline member update ID --role "PM" --position "LEADER"
+tracline member delete ID --force
+tracline member list [--role "ENGINEER"|--position "LEADER"]
+
+# Team structure
+tracline member change-position ID "LEADER"
+tracline member change-leader ID "LEADER-ID"
+tracline member team-structure ID [--json]
+```
+
+### System Commands
+```bash
+# Initialize
+tracline init [--force|--sample-data]
+
+# Config
+tracline config [--show|--get key|--set key value]
+
+# Migration
+tracline migrate --from-v1 old.db
+tracline migrate --to-postgresql
+```
+
+### Advanced Features
+```bash
+# Traceability
+tracline trace matrix --project ID [--format json]
+
+# GitHub
+tracline github sync [PROJECT-ID|--task TASK-ID]
+tracline github webhook --port 8080
+
+# Monitor
+tracline monitor start [--interval 60]
+tracline monitor stop
+tracline monitor status
+```
+
+## Command Shortcuts
+
+Claude understands these shortcuts:
+- `next` → `tracline next`
+- `done` → `tracline done`
+- `list` → `tracline list`
+- `show ID` → `tracline show ID`
+- `add ID "Title"` → `tracline add ID "Title"`
+- `log ID "Msg"` → `tracline log ID "Msg"`
+- `attach ID file` → `tracline attach ID file`
+
+## Important Notes
+
+1. State workflow: TODO → READY → DOING → TESTING → DONE
+2. TASK_ASSIGNEE is respected for filtering and defaults
+3. All output must be in English for GitHub
+4. Use `show TASK-ID --doc` before implementation
+5. Strict mode enforces quality requirements
+6. Web interface: http://localhost:8000
+
+## Module Usage (if not globally installed)
+
+```bash
+cd ../tracline
+python -m tracline.cli.main next
+python -m tracline.cli.main done
+python -m tracline.cli.main add "TASK-ID" "Title"
+```
